@@ -13,7 +13,7 @@
     "format": "prettier -w ."
   },
   "devDependencies": {
-    "concurrently": "^9.0.0",
+    "concurrently": "^9.2.0",
     "eslint": "^9.9.0",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4"

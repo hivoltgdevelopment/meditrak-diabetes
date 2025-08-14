@@ -1,0 +1,21 @@
+{
+  "name": "meditrack-diabetes",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n expo,func -c auto,auto \"pnpm --filter app-mobile start\" \"supabase functions serve --env-file ./env/.edge-functions.local\"",
+    "typecheck": "tsc -b",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "format": "prettier -w ."
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "eslint": "^9.9.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}

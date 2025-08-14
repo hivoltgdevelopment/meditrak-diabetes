@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "MediTrack Diabetes",
+    "slug": "meditrack-diabetes",
+    "scheme": "meditrack",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

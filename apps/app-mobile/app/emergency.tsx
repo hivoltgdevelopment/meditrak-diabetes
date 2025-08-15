@@ -2,17 +2,19 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image } from 'react-native';
 import QRCode from 'qrcode';
+import { getEmergencyInfo } from '../lib/emergency';
 
 export default function Emergency() {
   const [uri, setUri] = useState<string>('');
 
-  useEffect(()=>{
-    (async()=>{
-      const payload = JSON.stringify({ a:'medications', v:1 });
+  useEffect(() => {
+    (async () => {
+      const info = await getEmergencyInfo();
+      const payload = JSON.stringify(info);
       const dataUrl = await QRCode.toDataURL(payload);
       setUri(dataUrl);
     })();
-  },[]);
+  }, []);
 
   return (
     <View style={{ padding: 16, alignItems:'center' }}>

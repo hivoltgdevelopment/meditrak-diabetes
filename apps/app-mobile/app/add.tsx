@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
 
 export default function Add() {
@@ -8,11 +9,26 @@ export default function Add() {
   const [dosage, setDosage] = useState('');
   const [frequency, setFrequency] = useState('');
   const [category, setCategory] = useState<'medication' | 'supply'>('medication');
+  const router = useRouter();
 
   const save = async () => {
-    const { error } = await supabase.from('prescriptions').insert({ name, dosage, frequency, category });
+    const { data } = await supabase.auth.getSession();
+    const session = data.session;
+    if (!session) {
+      Alert.alert('Error', 'No session found');
+      return;
+    }
+    const { error } = await supabase
+      .from('prescriptions')
+      .insert({ name, dosage, frequency, category, user_id: session.user.id });
     if (error) Alert.alert('Error', error.message);
-    else Alert.alert('Saved', 'Prescription added');
+    else {
+      setName('');
+      setDosage('');
+      setFrequency('');
+      setCategory('medication');
+      router.replace('/');
+    }
   };
 
   return (

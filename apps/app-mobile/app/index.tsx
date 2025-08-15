@@ -1,7 +1,7 @@
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { Link, useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../lib/supabase';
 
 type Rx = { id: string; name: string; category: string; remaining_quantity: number; frequency: string | null };
@@ -9,17 +9,34 @@ type Rx = { id: string; name: string; category: string; remaining_quantity: numb
 export default function Home() {
   const [items, setItems] = useState<Rx[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => { if (!data.session) router.replace('/auth'); });
-    const load = async () => {
-      const { data, error } = await supabase.from('prescriptions').select('id,name,category,remaining_quantity,frequency').limit(50);
-      if (!error && data) setItems(data as Rx[]);
-      setLoading(false);
-    };
-    load();
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) router.replace('/auth');
+    });
+  }, [router]);
+
+  const fetchItems = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('prescriptions')
+      .select('id,name,category,remaining_quantity,frequency')
+      .limit(50);
+    if (!error && data) setItems(data as Rx[]);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      fetchItems().finally(() => setLoading(false));
+    }, [fetchItems])
+  );
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchItems().finally(() => setRefreshing(false));
+  }, [fetchItems]);
 
   if (loading) return <View style={{ flex:1, justifyContent:'center', alignItems:'center'}}><ActivityIndicator /></View>;
 
@@ -32,10 +49,13 @@ export default function Home() {
         renderItem={({ item }) => (
           <View style={{ padding: 12, borderRadius: 12, borderWidth: 1, marginBottom: 8 }}>
             <Text style={{ fontSize: 18 }}>{item.name}</Text>
-            <Text>{item.category} • Remaining: {item.remaining_quantity}</Text>
+            <Text>
+              {item.category} • Remaining: {item.remaining_quantity}
+            </Text>
             <Text>{item.frequency || ''}</Text>
           </View>
         )}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Link href="/add" asChild>

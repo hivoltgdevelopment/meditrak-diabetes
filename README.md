@@ -1,6 +1,9 @@
 # MediTrack Diabetes
 
-Repo scaffold optimized for **Supabase + Resend + VS Code** with an **Expo (React Native)** mobile client.  
+[Start Expo Go](pnpm --filter app-mobile start)
+[Start development client](pnpm --filter app-mobile start -- --dev-client --tunnel)
+
+Repo scaffold optimized for **Supabase + Resend + VS Code** with an **Expo (React Native)** mobile client.
 Owner: `hivoltgdevelopment` • Date: 2025-08-14
 
 ## Stack

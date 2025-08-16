@@ -45,6 +45,28 @@ export default function Inventory() {
     }
   };
 
+  const requestRefill = async (id: string, pharmacyId: string | null) => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u?.user) return toast.error("Please sign in");
+    if (!pharmacyId) return toast.error("No pharmacy on file");
+    const { data: ph, error: pErr } = await supabase
+      .from("pharmacies")
+      .select("email")
+      .eq("id", pharmacyId)
+      .single();
+    if (pErr || !ph?.email) return toast.error("Missing pharmacy email");
+    await supabase.functions.invoke("send-refill-email", {
+      body: { user_id: u.user.id, prescription_id: id, pharmacy_email: ph.email },
+    });
+    await supabase.from("refill_requests").insert({
+      prescription_id: id,
+      user_id: u.user.id,
+      pharmacy_id: pharmacyId,
+      status: "sent",
+    });
+    toast.success("Refill requested");
+  };
+
   return (
     <View style={{ padding: spacing(4), gap: spacing(3), flex: 1 }}>
       <Text style={{ fontSize: type.h2, fontWeight: "700" }}>Inventory</Text>
@@ -64,6 +86,7 @@ export default function Inventory() {
                 onChangeText={(t) => setEdits((e) => ({ ...e, [item.id]: t }))}
               />
               <Button title={busyId === item.id ? "Saving..." : "Apply"} onPress={() => apply(item.id)} />
+              <Button title="Request refill" onPress={() => requestRefill(item.id, item.pharmacy_id)} />
             </View>
           </Card>
         )}

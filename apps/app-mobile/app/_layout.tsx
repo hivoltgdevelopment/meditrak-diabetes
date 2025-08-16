@@ -17,6 +17,8 @@ export default function Layout() {
       <Stack.Screen name="add" options={{ title: "Add Prescription" }} />
       <Stack.Screen name="reminders" options={{ title: "Reminders" }} />
       <Stack.Screen name="inventory" options={{ title: "Inventory" }} />
+      <Stack.Screen name="providers" options={{ title: "Providers" }} />
+      <Stack.Screen name="pharmacies" options={{ title: "Pharmacies" }} />
       <Stack.Screen name="reports" options={{ title: "Reports" }} />
       <Stack.Screen name="emergency" options={{ title: "Emergency Card" }} />
     </Stack>

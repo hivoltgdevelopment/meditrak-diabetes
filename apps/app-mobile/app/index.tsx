@@ -51,6 +51,8 @@ export default function HomeScreen() {
         <Link href="/add" style={{ color: colors.accent }}>+ Add</Link>
         <Link href="/inventory" style={{ color: colors.accent }}>Inventory</Link>
         <Link href="/reminders" style={{ color: colors.accent }}>Reminders</Link>
+        <Link href="/providers" style={{ color: colors.accent }}>Providers</Link>
+        <Link href="/pharmacies" style={{ color: colors.accent }}>Pharmacies</Link>
         {/* Dev helper: seed one item if empty */}
         {(!loading && data.length === 0) && (
           <Link

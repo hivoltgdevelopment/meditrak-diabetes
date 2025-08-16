@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, TextInput } from "react-native";
 import { supabase } from "../src/api/supabase";
 import { usePrescriptions } from "../src/hooks/usePrescriptions";
@@ -11,7 +11,20 @@ export default function Inventory() {
   const { data, reload } = usePrescriptions();
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
-  const threshold = 5;
+  const [threshold, setThreshold] = useState(5);
+
+  useEffect(() => {
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u?.user) return;
+      const { data } = await supabase
+        .from("user_settings")
+        .select("low_stock_threshold")
+        .eq("user_id", u.user.id)
+        .single();
+      if (data?.low_stock_threshold) setThreshold(data.low_stock_threshold);
+    })();
+  }, []);
 
   const apply = async (id: string) => {
     const newQty = Number(edits[id] ?? "");

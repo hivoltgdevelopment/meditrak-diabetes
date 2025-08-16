@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import { useEffect } from "react";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../src/api/supabase";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({

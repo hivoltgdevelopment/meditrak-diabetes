@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from '../src/api/supabase';
 
 export interface EmergencyInfo {
   medications: { name: string; dosage: string }[];

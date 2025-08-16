@@ -17,7 +17,9 @@ export async function registerPushToken() {
   const token = tokenData.data;
   const { data: u } = await supabase.auth.getUser();
   if (u?.user && token) {
-    await supabase.from('user_push_tokens').upsert({ user_id: u.user.id, token }, { onConflict: 'user_id' });
+    await supabase
+      .from('user_push_tokens')
+      .upsert({ user_id: u.user.id, expo_push_token: token }, { onConflict: 'user_id,expo_push_token' });
   }
   return token;
 }

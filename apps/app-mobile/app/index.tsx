@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, RefreshControl } from "react-native";
 import { Link } from "expo-router";
 import { usePrescriptions } from "../src/hooks/usePrescriptions";
-import { registerPushToken } from "../src/api/notifications";
 import { Card } from "../src/ui/components/Card";
 import { colors, type, spacing } from "../src/ui/theme";
 import { supabase } from "../src/api/supabase";
@@ -12,7 +11,6 @@ export default function HomeScreen() {
   const [threshold, setThreshold] = useState(5);
 
   useEffect(() => {
-    registerPushToken().catch(() => {});
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u?.user) return;

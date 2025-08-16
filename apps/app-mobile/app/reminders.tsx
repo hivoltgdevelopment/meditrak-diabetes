@@ -1,52 +1,57 @@
-
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, FlatList } from 'react-native';
-import { supabase } from '../lib/supabase';
-
-type Row = { id: string; name: string; days_remaining: number | null };
+import React, { useEffect, useState } from "react";
+import { View, Text, TextInput } from "react-native";
+import * as Notifications from "expo-notifications";
+import { supabase } from "../src/api/supabase";
+import { Button } from "../src/ui/components/Button";
+import { toast } from "../src/ui/components/Toast";
+import { spacing, type } from "../src/ui/theme";
 
 export default function Reminders() {
-  const [rows, setRows] = useState<Row[]>([]);
+  const [inSeconds, setInSeconds] = useState("10");
+  const [title, setTitle] = useState("MediTrack");
+  const [body, setBody] = useState("Time to take your medication");
+  const [saving, setSaving] = useState(false);
 
-  const load = async () => {
-    const { data, error } = await supabase.from('v_prescription_days_remaining').select('id,name,days_remaining');
-    if (error) Alert.alert('Error', error.message);
-    else setRows(data as Row[]);
-  };
+  useEffect(() => {
+    (async () => {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== "granted") await Notifications.requestPermissionsAsync();
+    })();
+  }, []);
 
-  useEffect(() => { load(); }, []);
-
-  const sendRefill = async (id: string) => {
-    // Call Edge Function
+  const schedule = async () => {
     try {
-      const url = `${supabase.functions.url('/send-refill-email')}`; // this is a helper in supabase-js v2
-      const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prescription_id: id, pharmacy_email: 'pharmacy@example.com' }) });
-      const js = await resp.json();
-      if (!js.ok) throw new Error(js.error || 'Failed');
-      Alert.alert('Refill requested');
+      setSaving(true);
+      const { data: u } = await supabase.auth.getUser();
+      if (!u?.user) throw new Error("Please sign in");
+      const secs = Number(inSeconds) || 10;
+      const fireAt = new Date(Date.now() + secs * 1000).toISOString();
+
+      const { error } = await supabase.from("reminders").insert({
+        user_id: u.user.id, title, body, fire_at: fireAt
+      });
+      if (error) throw error;
+
+      await Notifications.scheduleNotificationAsync({ content: { title, body }, trigger: { seconds: secs } });
+      toast.success(`Reminder in ${secs}s`);
     } catch (e:any) {
-      Alert.alert('Error', e.message);
+      toast.error(e.message ?? String(e));
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <View style={{ padding: 16, gap: 12 }}>
-      <Text style={{ fontSize: 24, fontWeight: '600' }}>Reminders</Text>
-      <FlatList
-        data={rows}
-        keyExtractor={(i)=>i.id}
-        renderItem={({item}) => (
-          <View style={{ padding: 12, borderWidth: 1, borderRadius: 10, marginBottom: 8 }}>
-            <Text style={{ fontSize: 18 }}>{item.name}</Text>
-            <Text>Days remaining: {item.days_remaining ?? '—'}</Text>
-            {item.days_remaining !== null && item.days_remaining <= 5 && (
-              <TouchableOpacity style={{ marginTop: 8, padding: 12, backgroundColor: '#dc2626', borderRadius: 8 }} onPress={()=>sendRefill(item.id)}>
-                <Text style={{ textAlign:'center', color: 'white', fontWeight: '700'}}>Request Refill</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-      />
+    <View style={{ padding: spacing(4), gap: spacing(3) }}>
+      <Text style={{ fontSize: type.h2, fontWeight: "700" }}>Reminders</Text>
+      <Text>Title</Text>
+      <TextInput style={input} value={title} onChangeText={setTitle} />
+      <Text>Message</Text>
+      <TextInput style={input} value={body} onChangeText={setBody} />
+      <Text>Seconds from now</Text>
+      <TextInput style={input} value={inSeconds} onChangeText={setInSeconds} keyboardType="numeric" />
+      <Button title={saving ? "Scheduling..." : "Schedule reminder"} onPress={schedule} loading={saving} />
     </View>
   );
 }
+const input = { borderWidth: 1, borderRadius: 12, padding: 10, borderColor: "#E5E7EB" } as const;

@@ -1,91 +1,76 @@
+import React, { useEffect, useState } from "react";
+import { View, Text, FlatList, RefreshControl } from "react-native";
+import { Link } from "expo-router";
+import { usePrescriptions } from "../src/hooks/usePrescriptions";
+import { registerPushToken } from "../src/api/notifications";
+import { Card } from "../src/ui/components/Card";
+import { colors, type, spacing } from "../src/ui/theme";
+import { supabase } from "../src/api/supabase";
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
-import { Link, useRouter, useFocusEffect } from 'expo-router';
-import { supabase } from '../lib/supabase';
-
-type Rx = { id: string; name: string; category: string; remaining_quantity: number; frequency: string | null };
-
-export default function Home() {
-  const [items, setItems] = useState<Rx[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const router = useRouter();
+export default function HomeScreen() {
+  const { data, loading, error, reload } = usePrescriptions();
+  const [threshold, setThreshold] = useState(5);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) router.replace('/auth');
-    });
-  }, [router]);
-
-  const fetchItems = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('prescriptions')
-      .select('id,name,category,remaining_quantity,frequency')
-      .limit(50);
-    if (!error && data) setItems(data as Rx[]);
+    registerPushToken().catch(() => {});
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u?.user) return;
+      const { data } = await supabase.from("user_settings").select("low_stock_threshold").eq("user_id", u.user.id).single();
+      if (data?.low_stock_threshold) setThreshold(data.low_stock_threshold);
+    })();
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      fetchItems().finally(() => setLoading(false));
-    }, [fetchItems])
-  );
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchItems().finally(() => setRefreshing(false));
-  }, [fetchItems]);
-
-  if (loading) return <View style={{ flex:1, justifyContent:'center', alignItems:'center'}}><ActivityIndicator /></View>;
-
   return (
-    <View style={{ flex: 1, padding: 16, gap: 12 }}>
-      <Text style={{ fontSize: 24, fontWeight: '600' }}>Prescriptions</Text>
+    <View style={{ padding: spacing(4), gap: spacing(3), flex: 1 }}>
+      <Text style={{ fontSize: type.h1, fontWeight: "700" }}>Your prescriptions</Text>
+      {error ? <Text style={{ color: colors.danger }}>{error}</Text> : null}
+
       <FlatList
-        data={items}
-        keyExtractor={(i) => i.id}
-        renderItem={({ item }) => (
-          <View style={{ padding: 12, borderRadius: 12, borderWidth: 1, marginBottom: 8 }}>
-            <Text style={{ fontSize: 18 }}>{item.name}</Text>
-            <Text>
-              {item.category} • Remaining: {item.remaining_quantity}
-            </Text>
-            <Text>{item.frequency || ''}</Text>
-          </View>
-        )}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        data={data}
+        keyExtractor={(item) => item.id}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={reload} />}
+        ListEmptyComponent={!loading ? <Text>No prescriptions yet. Add one →</Text> : null}
+        renderItem={({ item }) => {
+          const low = (item.remaining_quantity ?? 0) <= threshold;
+          return (
+            <Card style={{ marginBottom: spacing(3) }}>
+              <Text style={{ fontWeight: "600" }}>{item.name}</Text>
+              {item.dosage ? <Text>{item.dosage}</Text> : null}
+              {item.frequency ? <Text>{item.frequency}</Text> : null}
+              <Text>Remaining: {item.remaining_quantity}</Text>
+              {low && (
+                <Text style={{ color: colors.warning, marginTop: spacing(1) }}>
+                  Low stock (≤ {threshold})
+                </Text>
+              )}
+            </Card>
+          );
+        }}
       />
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Link href="/add" asChild>
-          <TouchableOpacity style={{ flex:1, padding: 16, backgroundColor: '#2563eb', borderRadius: 12 }}>
-            <Text style={{ textAlign: 'center', color: 'white', fontWeight: '600' }}>Add Rx</Text>
-          </TouchableOpacity>
-        </Link>
-        <Link href="/reminders" asChild>
-          <TouchableOpacity style={{ flex:1, padding: 16, backgroundColor: '#111827', borderRadius: 12 }}>
-            <Text style={{ textAlign: 'center', color: 'white', fontWeight: '600' }}>Reminders</Text>
-          </TouchableOpacity>
-        </Link>
+
+      <View style={{ flexDirection: "row", gap: spacing(4) }}>
+        <Link href="/add" style={{ color: colors.accent }}>+ Add</Link>
+        <Link href="/inventory" style={{ color: colors.accent }}>Inventory</Link>
+        <Link href="/reminders" style={{ color: colors.accent }}>Reminders</Link>
+        {/* Dev helper: seed one item if empty */}
+        {(!loading && data.length === 0) && (
+          <Link
+            href=""
+            onPress={async () => {
+              const { data: u } = await supabase.auth.getUser();
+              if (!u?.user) return;
+              await supabase.from("prescriptions").insert({
+                user_id: u.user.id, name: "Metformin", category: "medication", remaining_quantity: 30
+              });
+              reload();
+            }}
+            style={{ color: colors.primary }}
+          >
+            Seed sample
+          </Link>
+        )}
       </View>
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-        <Link href="/inventory" asChild>
-          <TouchableOpacity style={{ flex:1, padding: 16, backgroundColor: '#0f766e', borderRadius: 12 }}>
-            <Text style={{ textAlign: 'center', color: 'white', fontWeight: '600' }}>Inventory</Text>
-          </TouchableOpacity>
-        </Link>
-        <Link href="/reports" asChild>
-          <TouchableOpacity style={{ flex:1, padding: 16, backgroundColor: '#6b21a8', borderRadius: 12 }}>
-            <Text style={{ textAlign: 'center', color: 'white', fontWeight: '600' }}>Reports</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
-      <Link href="/emergency" asChild>
-        <TouchableOpacity style={{ marginTop: 8, padding: 16, backgroundColor: '#b91c1c', borderRadius: 12 }}>
-          <Text style={{ textAlign: 'center', color: 'white', fontWeight: '700' }}>Emergency Card</Text>
-        </TouchableOpacity>
-      </Link>
     </View>
   );
 }

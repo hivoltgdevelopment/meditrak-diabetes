@@ -13,6 +13,23 @@ export interface Prescription {
   pharmacy_id?: UUID;
   refill_quantity?: number;
   remaining_quantity?: number;
+  insurance_cost?: number;
+}
+
+export interface ProviderContact {
+  id: UUID;
+  user_id: UUID;
+  name: string;
+  email?: string;
+  phone?: string;
+}
+
+export interface PharmacyContact {
+  id: UUID;
+  user_id: UUID;
+  name: string;
+  email?: string;
+  address?: string;
 }
 
 export const daysRemaining = (remaining: number, perDay: number) => {

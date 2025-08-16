@@ -7,6 +7,8 @@ export type Prescription = {
   dosage: string | null;
   frequency: string | null;
   remaining_quantity: number | null;
+  pharmacy_id: string | null;
+  insurance_cost: number | null;
 };
 
 export function usePrescriptions() {
@@ -18,7 +20,7 @@ export function usePrescriptions() {
     setLoading(true);
     const { data, error } = await supabase
       .from('prescriptions')
-      .select('id,name,dosage,frequency,remaining_quantity')
+      .select('id,name,dosage,frequency,remaining_quantity,pharmacy_id,insurance_cost')
       .order('name');
     if (error) setError(error.message);
     else setData((data as Prescription[]) || []);

@@ -13,6 +13,8 @@ export default function Add() {
   const [frequency, setFrequency] = useState("");
   const [category] = useState<"medication" | "supply">("medication");
   const [qty, setQty] = useState("0");
+  const [insuranceCost, setInsuranceCost] = useState("0");
+  const [pharmacyId, setPharmacyId] = useState("");
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
@@ -28,6 +30,8 @@ export default function Add() {
       frequency: frequency.trim() || null,
       category,
       remaining_quantity: Number(qty) || 0,
+      insurance_cost: Number(insuranceCost) || null,
+      pharmacy_id: pharmacyId.trim() || null,
     });
 
     setSaving(false);
@@ -47,6 +51,10 @@ export default function Add() {
       <TextInput style={input} value={frequency} onChangeText={setFrequency} placeholder="2×/day" />
       <Text>Starting quantity</Text>
       <TextInput style={input} value={qty} onChangeText={setQty} keyboardType="numeric" placeholder="30" />
+      <Text>Insurance cost</Text>
+      <TextInput style={input} value={insuranceCost} onChangeText={setInsuranceCost} keyboardType="numeric" placeholder="0" />
+      <Text>Pharmacy ID</Text>
+      <TextInput style={input} value={pharmacyId} onChangeText={setPharmacyId} placeholder="pharmacy uuid" />
       <Button title={saving ? "Saving..." : "Save"} onPress={save} loading={saving} />
     </View>
   );

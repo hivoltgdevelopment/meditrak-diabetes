@@ -1,18 +1,4 @@
--- 0003_push_tokens_and_triggers.sql
-create extension if not exists pg_net schema extensions;
-
-create table if not exists user_push_tokens (
-  id uuid primary key default uuid_generate_v4(),
-  user_id uuid references users(id) on delete cascade,
-  expo_push_token text not null,
-  created_at timestamptz default now(),
-  unique (user_id, expo_push_token)
-);
-
-alter table user_push_tokens enable row level security;
-create policy "own push tokens" on user_push_tokens
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
+-- redeploy notify_low_stock to use low_stock_threshold
 create or replace function notify_low_stock()
 returns trigger language plpgsql as $$
 declare
@@ -43,6 +29,7 @@ begin
 end;
 $$;
 
+drop trigger if exists trigger_notify_low_stock on prescriptions;
 create trigger trigger_notify_low_stock
 after insert or update of remaining_quantity on prescriptions
 for each row execute procedure notify_low_stock();

@@ -1,5 +1,5 @@
 import { Platform } from "react-native";
-import { supabase } from "./supabase";
+import { supabase } from "../src/api/supabase";
 
 /**
  * Request permissions from Apple HealthKit or Google Fit and wire up

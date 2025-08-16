@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../src/api/supabase';
 
 export default function Reports() {
   const exportCsv = async () => {

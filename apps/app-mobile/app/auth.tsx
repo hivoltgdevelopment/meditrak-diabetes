@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../src/api/supabase';
 import { useRouter } from 'expo-router';
 
 export default function Auth() {
